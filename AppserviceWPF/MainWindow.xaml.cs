@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Windows;
+using Windows.Storage;
 
 namespace AppserviceWPF
 {
@@ -8,6 +9,12 @@ namespace AppserviceWPF
         public MainWindow()
         {
             InitializeComponent();
+
+            string deviceUUID = ApplicationData.Current.LocalSettings.Values["uuid"] as string;
+            string app_config = ApplicationData.Current.LocalSettings.Values["config"] as string;
+
+            UUID_Text.Text = $"UUID: {deviceUUID}";
+            Config_Text.Text = $"App Config: {app_config}";
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)

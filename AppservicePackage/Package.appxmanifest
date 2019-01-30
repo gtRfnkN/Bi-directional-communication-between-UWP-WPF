@@ -45,8 +45,7 @@
       <Extensions>
         <desktop:Extension Category="windows.fullTrustProcess" Executable="AppserviceWPF/AppServiceWPF.exe">
           <desktop:FullTrustProcess>
-            <desktop:ParameterGroup GroupId="SyncGroup" Parameters="/Sync"/>
-            <desktop:ParameterGroup GroupId="OtherGroup" Parameters="/Other"/>
+            <desktop:ParameterGroup GroupId="WPF" Parameters="/wpf" />
           </desktop:FullTrustProcess>
         </desktop:Extension>
       </Extensions>

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.AppService;
 using Windows.Foundation.Collections;
@@ -16,47 +16,23 @@ namespace AppserviceDemo
         public MainPage()
         {
             InitializeComponent();
+            InitializeWPFApp();
         }
 
-        private async void StartButton_Click(object sender, RoutedEventArgs e)
+        private async void InitializeWPFApp()
         {
-            Debug.WriteLine("UWP -- start button clicked");
-
             if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1, 0))
             {
+                // add listeners for AppService status changes
                 App.AppServiceConnected += MainPage_AppServiceConnected;
                 App.AppServiceDisconnected += MainPage_AppServiceDisconnected;
 
-                // store command line parameters in local settings
-                // so the Lancher can retrieve them and pass them on
+                // store parameters in local settings for WPF
                 ApplicationData.Current.LocalSettings.Values["uuid"] = "UUID-67890-ghijk-12345-abcdef";
                 ApplicationData.Current.LocalSettings.Values["config"] = "0-1-0-0-2-BC";
 
+                // start the WPF app
                 await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("WPF");
-            }
-        }
-
-        private async void SendButton_Click(object sender, RoutedEventArgs e)
-        {
-            Debug.WriteLine("UWP -- send button clicked");
-
-            // display the response key/value pairs
-            ResultText.Text = "loading...";
-
-            ValueSet request = new ValueSet();
-            request.Add("KEY", "Stuff requested");
-            AppServiceResponse response = await App.Connection.SendMessageAsync(request);
-
-            if (response.Status == AppServiceResponseStatus.Success)
-            {
-                foreach (string key in response.Message.Keys)
-                {
-                    ResultText.Text += key + " = " + response.Message[key] + "\r\n";
-                }
-            }
-            else
-            {
-                ResultText.Text = $"Connection failed: {response.Status}";
             }
         }
 
@@ -66,6 +42,7 @@ namespace AppserviceDemo
         private async void MainPage_AppServiceConnected(object sender, AppServiceTriggerDetails e)
         {
             App.Connection.RequestReceived += AppServiceConnection_RequestReceived;
+
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
                 // enable UI to access  the connection
@@ -82,10 +59,9 @@ namespace AppserviceDemo
             {
                 // disable UI to access the connection
                 SendButton.IsEnabled = false;
-
-                // ask user if they want to reconnect
-                Reconnect();
             });
+
+            await Task.Delay(1000).ContinueWith(t => Reconnect());
         }
 
         /// <summary>
@@ -94,9 +70,9 @@ namespace AppserviceDemo
         /// </summary>
         private async void AppServiceConnection_RequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
         {
-            double d1 = (double)args.Request.Message["D1"];
-            double d2 = (double)args.Request.Message["D2"];
-            double result = d1 + d2;
+            int d1 = (int)args.Request.Message["V1"];
+            int d2 = (int)args.Request.Message["V2"];
+            int result = d1 + d2;
 
             ValueSet response = new ValueSet();
             response.Add("RESULT", result);
@@ -114,7 +90,39 @@ namespace AppserviceDemo
         /// </summary>
         private async void Reconnect()
         {
-            await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
+            if (App.IsForeground)
+            {
+                await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
+            }
+        }
+
+
+        private async void SendDataToUWPForResponse()
+        {
+            ValueSet request = new ValueSet();
+            request.Add("KEY", "Stuff requested");
+            AppServiceResponse response = await App.Connection.SendMessageAsync(request);
+
+            if (response.Status == AppServiceResponseStatus.Success)
+            {
+                ResultText.Text += response.Message["result"] + "\r\n";
+            }
+            else
+            {
+                ResultText.Text = $"Connection failed: {response.Status}";
+            }
+        }
+
+
+
+        private void StartButton_Click(object sender, RoutedEventArgs e)
+        {
+            InitializeWPFApp();
+        }
+
+        private void SendButton_Click(object sender, RoutedEventArgs e)
+        {
+            SendDataToUWPForResponse();
         }
     }
 }

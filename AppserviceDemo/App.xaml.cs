@@ -19,6 +19,7 @@ namespace AppserviceDemo
         public static AppServiceConnection Connection = null;
         public static event EventHandler AppServiceDisconnected;
         public static event EventHandler<AppServiceTriggerDetails> AppServiceConnected;
+        public static bool IsForeground = false;
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -28,7 +29,22 @@ namespace AppserviceDemo
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
+            this.EnteredBackground += App_EnteredBackground;
+            this.LeavingBackground += App_LeavingBackground;
         }
+
+
+        private void App_LeavingBackground(object sender, LeavingBackgroundEventArgs e)
+        {
+            IsForeground = true;
+        }
+
+        private void App_EnteredBackground(object sender, EnteredBackgroundEventArgs e)
+        {
+            IsForeground = false;
+        }
+
+
         protected override void OnBackgroundActivated(BackgroundActivatedEventArgs args)
         {
             base.OnBackgroundActivated(args);
@@ -53,9 +69,12 @@ namespace AppserviceDemo
         /// </summary>
         private void OnTaskCanceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
         {
+            System.Diagnostics.Debug.WriteLine("OnTaskCanceled");
+
             AppServiceDeferral?.Complete();
             AppServiceDeferral = null;
             Connection = null;
+
             AppServiceDisconnected?.Invoke(this, null);
         }
 
@@ -126,6 +145,8 @@ namespace AppserviceDemo
         /// <param name="e">Details about the suspend request.</param>
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
+            IsForeground = false;
+
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();

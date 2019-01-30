@@ -43,6 +43,9 @@
       </uap:VisualElements>
 
       <Extensions>
+        <uap:Extension Category="windows.appService">
+          <uap:AppService Name="CustomInteropService" />
+        </uap:Extension>
         <desktop:Extension Category="windows.fullTrustProcess" Executable="AppserviceWPF/AppServiceWPF.exe">
           <desktop:FullTrustProcess>
             <desktop:ParameterGroup GroupId="WPF" Parameters="/wpf" />

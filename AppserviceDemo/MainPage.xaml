@@ -14,7 +14,8 @@
             <RowDefinition Height="157*"/>
         </Grid.RowDefinitions>
         <Button Content="Start WPF" HorizontalAlignment="Stretch" Margin="60,70,60,670" VerticalAlignment="Stretch" Grid.RowSpan="2" Click="StartButton_Click"/>
-        <Button Content="Trigger WPF stuff" HorizontalAlignment="Stretch" Margin="60,135,60,390" VerticalAlignment="Stretch" Click="SendButton_Click" Grid.Row="1"/>
+        <Button IsEnabled="False" x:Name="SendButton" Content="Send Data to WPF" HorizontalAlignment="Stretch" Margin="60,135,60,390" VerticalAlignment="Stretch" Click="SendButton_Click" Grid.Row="1"/>
+        <TextBlock x:Name="ResultText" HorizontalAlignment="Left" Margin="448,525,0,0" Grid.Row="1" Text="Result: none" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="587"/>
 
     </Grid>
 </Page>

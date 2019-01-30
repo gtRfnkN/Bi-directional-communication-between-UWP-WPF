@@ -1,18 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using Windows.ApplicationModel.AppService;
+using Windows.ApplicationModel.Background;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
 namespace AppserviceDemo
@@ -22,6 +14,12 @@ namespace AppserviceDemo
     /// </summary>
     sealed partial class App : Application
     {
+
+        public static BackgroundTaskDeferral AppServiceDeferral = null;
+        public static AppServiceConnection Connection = null;
+        public static event EventHandler AppServiceDisconnected;
+        public static event EventHandler<AppServiceTriggerDetails> AppServiceConnected;
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -31,7 +29,43 @@ namespace AppserviceDemo
             this.InitializeComponent();
             this.Suspending += OnSuspending;
         }
+        protected override void OnBackgroundActivated(BackgroundActivatedEventArgs args)
+        {
+            base.OnBackgroundActivated(args);
 
+            if (args.TaskInstance.TriggerDetails is AppServiceTriggerDetails details)
+            {
+                // only accept connections from callers in the same package
+                if (details.CallerPackageFamilyName == Package.Current.Id.FamilyName)
+                {
+                    // connection established from the fulltrust process
+                    AppServiceDeferral = args.TaskInstance.GetDeferral();
+                    args.TaskInstance.Canceled += OnTaskCanceled;
+
+                    Connection = details.AppServiceConnection;
+                    AppServiceConnected?.Invoke(this, args.TaskInstance.TriggerDetails as AppServiceTriggerDetails);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Task canceled here means the app service client is gone
+        /// </summary>
+        private void OnTaskCanceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
+        {
+            AppServiceDeferral?.Complete();
+            AppServiceDeferral = null;
+            Connection = null;
+            AppServiceDisconnected?.Invoke(this, null);
+        }
+
+
+
+
+
+
+
+        #region Default State Management
         /// <summary>
         /// Invoked when the application is launched normally by the end user.  Other entry points
         /// will be used such as when the application is launched to open a specific file.
@@ -96,5 +130,7 @@ namespace AppserviceDemo
             //TODO: Save application state and stop any background activity
             deferral.Complete();
         }
+
+        #endregion
     }
 }

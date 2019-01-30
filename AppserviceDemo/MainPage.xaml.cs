@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using Windows.ApplicationModel;
+using Windows.Foundation.Metadata;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
@@ -8,14 +11,24 @@ namespace AppserviceDemo
     {
         public MainPage()
         {
-            this.InitializeComponent();
+            InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private async void StartButton_Click(object sender, RoutedEventArgs e)
         {
-            Debug.WriteLine("UWP -- button clicked");
+            Debug.WriteLine("UWP -- start button clicked");
 
-            // TODO: trigger bridge stuff
+            if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1, 0))
+            {
+                await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
+            }
+        }
+
+        private void SendButton_Click(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("UWP -- send button clicked");
+
+            // TODO: send data to WPF
         }
     }
 }
